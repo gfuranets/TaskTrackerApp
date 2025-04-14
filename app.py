@@ -179,9 +179,35 @@ def delete():
 
     return render_template('delete.html', form = form, tasks = tasks)
 
-@app.route('/increase')
+@app.route('/increase', methods = ['POST'])
 @login_required
 def increase():
+    task = request.form.get('task')
+    current_progress = int(request.form.get('current_progress'))
+    max_progress = int(request.form.get('max_progress'))
+    added_progress = int(request.form.get('added_progress'))
+
+    if added_progress > 0 and added_progress <= max_progress - current_progress:
+        user = User.query.get(current_user.id)
+        user.tasks[task][0] += added_progress
+
+        db.session.commit()
+
+    return redirect('/indexLogged')
+
+@app.route('/decrease', methods = ['POST'])
+@login_required
+def decrease():
+    task = request.form.get('task')
+    current_progress = int(request.form.get('current_progress'))
+    removed_progress = int(request.form.get('removed_progress'))
+
+    if removed_progress > 0 and removed_progress >= current_progress:
+        user = User.query.get(current_user.id)
+        user.tasks[task][0] -= removed_progress
+
+        db.session.commit()
+
     return redirect('/indexLogged')
 
 @app.route('/statistics.html')

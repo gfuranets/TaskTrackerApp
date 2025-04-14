@@ -21,9 +21,19 @@ Homepage
                 <input type="hidden" name="max_progress" value="{{ value[1] }}">
                 
                 <!-- User just inputs the amount -->
-                <input type="number" name="amount" placeholder="Add amount" required>
+                <input type="number" name="added_progress" placeholder="Add progress" required>
                 
-                <button type="submit">Update</button>
+                <button type="submit">Add</button>
+            </form>
+            
+            <form action="{{ url_for('decrease') }}" method="POST">
+                <input type="hidden" name="task" value="{{ key }}">
+
+                <input type="hidden" name="current_progress" value="{{ value[0] }}">
+
+                <input type="number" name="removed_progress" placeholder="Remove progress" required>
+
+                <button type="submit">Remove</button>
             </form>
         </div>
     {% endfor %}
