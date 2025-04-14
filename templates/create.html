@@ -1,0 +1,17 @@
+{% extends 'baseLogged.html' %}
+
+{% block title %}
+Create Task
+{% endblock %}
+
+{% block content %}
+<h1>Create Task</h1>
+
+<form method="POST">
+    {{ form.hidden_tag() }}
+    {{ form.task }}
+    {{ form.amount }}
+    {{ form.submit }}
+</form>
+
+{% endblock %}
