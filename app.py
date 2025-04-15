@@ -12,6 +12,7 @@ from flask_bcrypt import Bcrypt
 
 from flask_migrate import Migrate
 
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -58,7 +59,7 @@ class RegisterForm(FlaskForm):
             username = username.data).first()
         if existing_user_username:
             raise ValidationError(
-                "That username is already taken")
+                'That username is already taken')
 
 class LoginForm(FlaskForm):
     username = StringField(validators = [InputRequired(), 
@@ -80,12 +81,6 @@ class CreateForm(FlaskForm):
     
     submit = SubmitField('Create')
 
-class DeleteForm(FlaskForm):
-    task = StringField(validators = [InputRequired(),
-                                    Length(min = 1, max = 20)],
-                                    render_kw = {'placeholder': 'Task'})
-    
-    submit = SubmitField('Delete')
 
 @app.route('/')
 @app.route('/index')
@@ -133,6 +128,15 @@ def logout():
 @app.route('/indexLogged')
 @login_required
 def indexLogged():
+    """ Set task progress to zero each day """
+    todays_date = str(datetime.today().date())[5:]
+    if todays_date != start_date:
+        for task in current_user.tasks:
+            current_user.tasks[task][0] = 0
+
+            flag_modified(current_user, 'tasks')
+            db.session.commit()
+
     tasks = current_user.tasks if current_user.tasks else {}
     return render_template('indexLogged.html', tasks = tasks)
 
@@ -146,40 +150,31 @@ def create():
         task = form.task.data
         amount = form.amount.data
 
-        # Access the user's task dict
-        user_id = current_user.id
-        user = User.query.get(user_id)
-
         # Check whether there is a dict
-        if user.tasks is None:
-            user.tasks = MutableDict() # needed for further changing
+        if current_user.tasks is None:
+            current_user.tasks = MutableDict() # needed for further changing
 
-        # Change the task dict
-        user.tasks.update({task: [0, amount]})
+        # Add new task to the tasks dictionary
+        current_user.tasks.update({task: [0, amount]})
         db.session.commit()
 
         return redirect('/indexLogged')
 
     return render_template('create.html', form = form)
 
-@app.route('/delete', methods = ['GET', 'POST'])
+@app.route('/delete', methods = ['POST'])
 @login_required
 def delete():
-    form = DeleteForm()
-    tasks = current_user.tasks if current_user.tasks else MutableDict()
+    task = request.form.get('task')
 
-    if form.validate_on_submit():
-        user_id = current_user.id 
-        user = User.query.get(user_id)
+    if current_user.tasks != {}:
+        if task in current_user.tasks:
+            current_user.tasks.pop(task)
 
-        if user.tasks != {}:
-            if form.task.data in user.tasks:
-                user.tasks.pop(form.task.data)
+            flag_modified(current_user, 'tasks')
+            db.session.commit()
 
-        db.session.commit()
-        return redirect('/indexLogged')
-
-    return render_template('delete.html', form = form, tasks = tasks)
+    return redirect('/indexLogged')
 
 @app.route('/increase', methods = ['POST'])
 @login_required
@@ -188,11 +183,9 @@ def increase():
     added_progress = int(request.form.get('added_progress'))
 
     if added_progress > 0:
-        user = User.query.get(current_user.id)
+        current_user.tasks[task][0] += added_progress
 
-        user.tasks[task][0] += added_progress
-
-        flag_modified(user, "tasks")
+        flag_modified(current_user, 'tasks')
         db.session.commit()
 
     return redirect('/indexLogged')
@@ -205,15 +198,13 @@ def decrease():
     removed_progress = int(request.form.get('removed_progress'))
 
     if removed_progress > 0:
-        user = User.query.get(current_user.id)
-
         if removed_progress <= current_progress:
-            user.tasks[task][0] -= removed_progress
+            current_user.tasks[task][0] -= removed_progress
 
         elif removed_progress > current_progress:
-            user.tasks[task][0] = 0
+            current_user.tasks[task][0] = 0
 
-        flag_modified(user, "tasks")
+        flag_modified(current_user, 'tasks')
         db.session.commit()
 
     return redirect('/indexLogged')
@@ -224,4 +215,7 @@ def statistics():
     return render_template('statistics.html')
 
 if __name__ == '__main__':
+    global start_date
+    start_date = str(datetime.today().date())[5:]
+
     app.run(debug = True)

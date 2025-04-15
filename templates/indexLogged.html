@@ -10,6 +10,12 @@ Homepage
 <div class="task-container">
     {% for key, value in tasks.items() %}
         <div class="task">
+            <form action="{{ url_for('delete') }}" method="POST">
+                <input type="hidden" name="task" value="{{ key }}">
+
+                <button type="submit">Delete</button>
+            </form>
+
             <p>{{ key }}: {{ value[0] }} / {{ value[1] }}</p><br>
 
             <p>Progress: {{ (value[0] / value[1] * 100) | int }}% </p><br>
