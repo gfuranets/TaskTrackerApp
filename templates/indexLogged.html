@@ -10,15 +10,15 @@ Homepage
 <div class="task-container">
     {% for key, value in tasks.items() %}
         <div class="task">
-            <p>{{ key }}: {{ value[0] }} / {{ value[1] }}</p>
+            <p>{{ key }}: {{ value[0] }} / {{ value[1] }}</p><br>
+
+            <p>Progress: {{ (value[0] / value[1] * 100) | int }}% </p><br>
             
             <form action="{{ url_for('increase') }}" method="POST">
                 <!-- Automatically send task name -->
                 <input type="hidden" name="task" value="{{ key }}">
 
                 <input type="hidden" name="current_progress" value="{{ value[0] }}">
-
-                <input type="hidden" name="max_progress" value="{{ value[1] }}">
                 
                 <!-- User just inputs the amount -->
                 <input type="number" name="added_progress" placeholder="Add progress" required>

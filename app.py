@@ -2,6 +2,8 @@ from flask import Flask, render_template, redirect, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.types import PickleType
 from sqlalchemy.ext.mutable import MutableDict
+from sqlalchemy.orm.attributes import flag_modified
+
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, IntegerField
@@ -164,7 +166,7 @@ def create():
 @login_required
 def delete():
     form = DeleteForm()
-    tasks = current_user.tasks if current_user.tasks else {}
+    tasks = current_user.tasks if current_user.tasks else MutableDict()
 
     if form.validate_on_submit():
         user_id = current_user.id 
@@ -183,14 +185,14 @@ def delete():
 @login_required
 def increase():
     task = request.form.get('task')
-    current_progress = int(request.form.get('current_progress'))
-    max_progress = int(request.form.get('max_progress'))
     added_progress = int(request.form.get('added_progress'))
 
-    if added_progress > 0 and added_progress <= max_progress - current_progress:
+    if added_progress > 0:
         user = User.query.get(current_user.id)
+
         user.tasks[task][0] += added_progress
 
+        flag_modified(user, "tasks")
         db.session.commit()
 
     return redirect('/indexLogged')
@@ -202,10 +204,16 @@ def decrease():
     current_progress = int(request.form.get('current_progress'))
     removed_progress = int(request.form.get('removed_progress'))
 
-    if removed_progress > 0 and removed_progress >= current_progress:
+    if removed_progress > 0:
         user = User.query.get(current_user.id)
-        user.tasks[task][0] -= removed_progress
 
+        if removed_progress <= current_progress:
+            user.tasks[task][0] -= removed_progress
+
+        elif removed_progress > current_progress:
+            user.tasks[task][0] = 0
+
+        flag_modified(user, "tasks")
         db.session.commit()
 
     return redirect('/indexLogged')
