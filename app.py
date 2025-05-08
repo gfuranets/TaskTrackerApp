@@ -192,11 +192,21 @@ def delete():
     task = request.form.get('task')
 
     if current_user.tasks and task in current_user.tasks:
+        # Remove from tasks
         current_user.tasks.pop(task)
         flag_modified(current_user, 'tasks')
+
+        # Remove from stats
+        if current_user.stats:
+            for day in current_user.stats:
+                if task in current_user.stats[day]:
+                    current_user.stats[day].pop(task)
+            flag_modified(current_user, 'stats')
+
         db.session.commit()
 
     return redirect('/indexLogged')
+
 
 
 @app.route('/increase', methods=['POST'])
