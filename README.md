@@ -27,3 +27,13 @@ The project consists of following components:
 3. Device Limit - available on PCs.
 --------------------------------------------------------------------------------------------------------------------------------------------------
 Version document / versiju dokuments: https://docs.google.com/document/d/1fssTP203BgSVUqvZdM4qiQk5ApNiHlxytIT4N2P2kXw/edit?usp=sharing
+
+Instructions for launching the app / Instrukcijas programas palaišanai:
+python -m pip install -r .\requirements.txt
+
+from app import app, db
+app.app_context().push()
+db.create_all()
+
+venv/Scripts/activate
+python /app.py
