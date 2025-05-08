@@ -207,7 +207,7 @@ def delete():
 
     return redirect('/indexLogged')
 
-
+ d
 
 @app.route('/increase', methods=['POST'])
 @login_required
@@ -258,6 +258,7 @@ def statistics():
                 task_progress[task] = []
             task_progress[task].append((day, value))
 
+    plt.switch_backend('agg')
     plt.figure(figsize=(10, 6))
 
     for task, data in task_progress.items():
@@ -283,4 +284,4 @@ def statistics():
     return render_template('statistics.html', plot_url=image_base64, tasks=current_user.tasks)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug = True)
